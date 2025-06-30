@@ -1,0 +1,316 @@
+import { HTTPException } from "hono/http-exception";
+import { Context } from "hono";
+import { db } from "../lib/db/client";
+import { EventEmitterAsyncResource } from "events";
+
+// GET /api/projectUsers - get all projectUsers
+export const getProjectUsers = async (c: Context) => {
+  try {
+    if (!db) {
+      throw new HTTPException(500, { message: "Database is unavailable" });
+    }
+
+    const projectUsers = await db.projectUser.findMany({
+      select: {
+        id: true,
+        email: true,
+        metadata: true,
+        projectId: true,
+        project: {
+          select: {
+            id: true,
+            name: true,
+            platform: true,
+          },
+        },
+        sessions: {
+          select: {
+            id: true,
+            createdAt: true,
+            accessExpiration: true,
+          },
+        },
+      },
+    });
+
+    return c.json({
+      projectUsers,
+      count: projectUsers.length,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+
+    console.error("Failed to fetch project users:", error);
+    throw new HTTPException(500, { message: "Failed to fetch project users" });
+  }
+};
+
+// POST /api/projectUsers - create projectUser
+export const createProjectUser = async (c: Context) => {
+  try {
+    if (!db) {
+      throw new HTTPException(500, { message: "Database is unavailable" });
+    }
+
+    const body = await c.req.json();
+
+    // This checks to see if the project exists
+    if (!body.email || !body.hashPassword) {
+      throw new HTTPException(400, {
+        message: "Email and password is required",
+      });
+    }
+
+    // This checks to see if the email already exists in the project
+    if (body.projectId) {
+      const projectExists = await db.project.findUnique({
+        where: { id: body.projectId },
+      });
+
+      if (!projectExists) {
+        throw new HTTPException(400, { message: "Project not found" });
+      }
+
+      const existingProjectUser = await db.projectUser.findFirst({
+        where: { projectId: body.projectId },
+      });
+
+      if (existingProjectUser) {
+        throw new HTTPException(400, {
+          message: "User already exists in this project",
+        });
+      }
+    }
+
+    const newProjectUser = await db.projectUser.create({
+      data: {
+        email: body.email,
+        hashPassword: body.hashPassword,
+        metadata: body.metadata || {},
+        projectId: body.projectId || null,
+      },
+      select: {
+        id: true,
+        email: true,
+        metadata: true,
+        projectId: true,
+        project: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    return c.json(
+      {
+        message: "Project user successfully created!",
+        projectUser: newProjectUser,
+      },
+      201
+    );
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    console.error("Failed to create project user:", error);
+    throw new HTTPException(500, { message: "Failed to create project user" });
+  }
+};
+
+// GET /api/projectUsers/:id - get a projectUser
+export const getProjectUser = async (c: Context) => {
+  try {
+    if (!db) {
+      throw new HTTPException(500, { message: "Database is unavailable" });
+    }
+
+    const projectUserId = parseInt(c.req.param("id"));
+
+    if (isNaN(projectUserId)) {
+      throw new HTTPException(400, { message: "Invalid project user ID" });
+    }
+
+    const findProjectUser = await db.projectUser.findUnique({
+      where: { id: projectUserId },
+      include: {
+        project: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            accessTTL: true,
+            refreshTTL: true,
+            singleSession: true,
+          },
+        },
+        sessions: {
+          select: {
+            id: true,
+            createdAt: true,
+            revokedAt: true,
+            accessExpiration: true,
+            refreshExpiration: true,
+            deviceInfo: true,
+          },
+        },
+        verifications: {
+          select: {
+            id: true,
+            code: true,
+            createdAt: true,
+            expiresAt: true,
+            verifiedAt: true,
+            isUsed: true,
+          },
+        },
+        magicLinks: {
+          select: {
+            id: true,
+            expiresAt: true,
+            isUsed: true,
+          },
+        },
+      },
+    });
+
+    if (!findProjectUser) {
+      throw new HTTPException(404, { message: "Project user not found" });
+    }
+
+    return c.json({
+      findProjectUser,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+
+    console.error("Failed to fetch project user:", error);
+    throw new HTTPException(500, { message: "Failed to fetch project user" });
+  }
+};
+
+// PUT /api/projectUsers/:id - update a projectUser
+export const updateProjectUser = async (c: Context) => {
+  try {
+    if (!db) {
+      throw new HTTPException(500, { message: "Database is unavailable" });
+    }
+
+    const projectUserId = parseInt(c.req.param("id"));
+
+    if (isNaN(projectUserId)) {
+      throw new HTTPException(400, { message: "Invalid project user ID" });
+    }
+
+    const body = await c.req.json();
+
+    const existingProjectUser = await db.projectUser.findUnique({
+      where: { id: projectUserId },
+    });
+
+    if (!existingProjectUser) {
+      throw new HTTPException(400, { message: "Project user not found" });
+    }
+
+    if (body.projectId && body.projectId !== existingProjectUser.projectId) {
+      const projectExists = await db.project.findUnique({
+        where: { id: body.projectId },
+      });
+
+      if (!projectExists) {
+        throw new HTTPException(400, { message: "Project not found" });
+      }
+
+      const projectHasUser = await db.projectUser.findFirst({
+        where: { projectId: body.projectId, id: { not: projectUserId } },
+      });
+
+      if (projectHasUser) {
+        throw new HTTPException(400, {
+          message: "Project already has an existing user",
+        });
+      }
+    }
+
+    const updateData: any = {};
+    if (body.email) updateData.email = body.email;
+    if (body.hashPassword) updateData.hashPassword = body.hashPassword;
+    if (body.metadata !== undefined) updateData.metadata = body.metadata;
+    if (body.projectId !== undefined) updateData.projectId = body.projectId;
+
+    const updatedProjectUser = await db.projectUser.update({
+      where: { id: projectUserId },
+      data: updateData,
+      select: {
+        id: true,
+        email: true,
+        metadata: true,
+        project: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+
+    return c.json({
+      message: "Project user successfully updated!",
+      projectUser: updatedProjectUser,
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+
+    console.error("Failed to update project user:", error);
+    throw new HTTPException(500, { message: "Failed to update project user" });
+  }
+};
+
+// DELETE /api/projectUsers/:id - delete a projectUser
+export const deleteProjectUser = async (c: Context) => {
+  try {
+    if (!db) {
+      throw new HTTPException(500, { message: "Database is unavailable" });
+    }
+
+    const projectUserId = parseInt(c.req.param("id"));
+    if (isNaN(projectUserId)) {
+      throw new HTTPException(400, { message: "Invalid project user ID" });
+    }
+
+    const existingProjectUser = await db.projectUser.findUnique({
+      where: { id: projectUserId },
+      include: {
+        sessions: true,
+        verifications: true,
+        magicLinks: true,
+      },
+    });
+
+    if (!existingProjectUser) {
+      throw new HTTPException(400, { message: "Project user not found" });
+    }
+
+    await db.projectUser.delete({
+      where: { id: projectUserId },
+    });
+
+    return c.json({
+      message: "Project user successfully deleted!",
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+
+    console.error("Failed to delete project user:", error);
+    throw new HTTPException(500, { message: "Failed to delete project user" });
+  }
+};

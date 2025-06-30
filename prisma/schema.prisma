@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int                @id @default(autoincrement())
+  email         String             @unique
+  hashPassword  String
+  metadata      Json
+  verifications VerificationCode[]
+
+  @@index(fields: [email])
+  @@map("users")
+}
+
+model ProjectUser {
+  id            Int                @id @default(autoincrement())
+  email         String             @unique
+  hashPassword  String
+  metadata      Json
+  sessions      UserSession[]
+  verifications VerificationCode[]
+  project       Project?           @relation(fields: [projectId], references: [id])
+  projectId     Int?
+  magicLinks    MagicLink[]
+
+  @@index(fields: [email])
+  @@map("projectUsers")
+}
+
+model Project {
+  id            Int           @id @default(autoincrement())
+  name          String
+  description   String?
+  platform      Platform      @default(all)
+  accessTTL     Int           @default(900)
+  refreshTTL    Int           @default(43200)
+  singleSession Boolean       @default(false)
+  users         ProjectUser[]
+
+  @@map("projects")
+}
+
+model MagicLink {
+  id        Int         @id @default(autoincrement())
+  token     String
+  user      ProjectUser @relation(fields: [userId], references: [id])
+  userId    Int
+  expiresAt DateTime
+  usedAt    DateTime
+  isUsed    Boolean
+  isExpired Boolean
+  ipUsed    String?
+
+  @@index(fields: [token])
+  @@map("magicLinks")
+}
+
+model Session {
+  id
+}
+
+model UserSession {
+  id                Int         @id @default(autoincrement())
+  createdAt         DateTime    @default(now())
+  revokedAt         DateTime
+  accessExpiration  DateTime
+  refreshExpiration DateTime
+  userId            Int
+  accessToken       String
+  refreshToken      String
+  ipAddress         String?
+  deviceInfo        Json?
+  user              ProjectUser @relation(fields: [userId], references: [id])
+
+  @@map("userSessions")
+}
+
+model VerificationCode {
+  id            Int          @id @default(autoincrement())
+  code          String       @unique
+  createdAt     DateTime     @default(now())
+  expiresAt     DateTime
+  verifiedAt    DateTime
+  isUsed        Boolean
+  userId        Int?
+  user          User?        @relation(fields: [userId], references: [id])
+  projectUser   ProjectUser? @relation(fields: [projectUserId], references: [id])
+  projectUserId Int?
+
+  @@map("verificationCodes")
+}
+
+enum Platform {
+  web
+  mobile
+  desktop
+  all
+}

@@ -1,0 +1,12 @@
+// Step 1
+// set up server and get it to run -- Complete
+// configure both cors and helmet -- Complete
+// create a health endpoint (look it up) -- Complete
+// initialize redis (create one file that connects to it & export that variable so you can use it everywhere else) -- Complete
+// do the same step above for prisma (look at the docs to do it) -- Complete
+// make the middleware to check the api key -- Complete
+
+// Step 2
+// creating project routes -- Not Started
+// create a controller to create/update/delete/read -- Not Started
+// prisma
