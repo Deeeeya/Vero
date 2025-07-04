@@ -63,7 +63,13 @@ model MagicLink {
 }
 
 model Session {
-  id
+  id        String   @id @default(uuid())
+  userId    Int
+  metadata  Json
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@map("sessions")
 }
 
 model UserSession {

@@ -1,8 +1,6 @@
 import { HTTPException } from "hono/http-exception";
 import { Context } from "hono";
 import { db } from "../lib/db/client";
-import { dmmfToRuntimeDataModel } from "@prisma/client/runtime/library";
-import { ifError } from "assert";
 
 // GET /api/projects - Get all projects
 export const getProjects = async (c: Context) => {

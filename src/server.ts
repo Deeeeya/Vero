@@ -6,13 +6,28 @@ import { logger } from "hono/logger";
 import { auth } from "./middlewares/auth.middleware";
 import { getRedisClient, initRedis } from "./lib/redis/client";
 import { db } from "./lib/db/client";
+import { HTTPException } from "hono/http-exception";
+import { authRoutes } from "./routes/auth.routes";
 
 const app = new Hono();
 
 app.use(secureHeaders());
 app.use(cors());
 app.use(logger());
-app.use("/api/*", auth);
+// app.use("/api/*", auth);
+
+app.onError((err, c) => {
+  if (err instanceof HTTPException) {
+    return err.getResponse();
+  }
+
+  return c.json(
+    {
+      message: "Internal server error",
+    },
+    500
+  );
+});
 
 app.get("/health", async (c) => {
   try {
@@ -96,6 +111,8 @@ app.get("/api/users", async (c) => {
 app.get("/api/data", (c) => {
   return c.json({ message: "Anyone can access this API!" });
 });
+
+app.route("/auth", authRoutes);
 
 const port = 3000;
 

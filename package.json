@@ -5,13 +5,16 @@
     "start": "node dist/server.js"
   },
   "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
     "@types/node": "^24.0.3",
     "node-pg-migrate": "^8.0.2",
     "typescript": "^5.8.3"
   },
   "dependencies": {
     "@hono/node-server": "^1.14.4",
+    "@hono/zod-validator": "^0.7.0",
     "@prisma/client": "^6.9.0",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "crypto-js": "^4.2.0",
     "dotenv": "^16.5.0",

@@ -7,6 +7,6 @@
 // make the middleware to check the api key -- Complete
 
 // Step 2
-// creating project routes -- Not Started
-// create a controller to create/update/delete/read -- Not Started
+// creating project routes -- Complete
+// create a controller to create/update/delete/read -- In Progress
 // prisma
