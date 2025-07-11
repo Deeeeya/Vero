@@ -4,210 +4,145 @@ import { Context } from "hono";
 
 // GET /api/users - Get all users
 export const getUsers = async (c: Context) => {
-  try {
-    if (!db) {
-      throw new HTTPException(500, { message: "Database is unavailable" });
-    }
+  const users = await db.user.findMany({
+    select: {
+      id: true,
+      email: true,
+      metadata: true,
+    },
+  });
 
-    const users = await db.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        metadata: true,
-      },
-    });
-
-    return c.json({
-      users,
-      count: users.length,
-    });
-  } catch (error) {
-    if (error instanceof HTTPException) {
-      throw error;
-    }
-
-    console.error("Failed to fetch users:", error);
-    throw new HTTPException(500, { message: "Failed to fetch users" });
-  }
+  return c.json({
+    users,
+    count: users.length,
+  });
 };
 
 // POST /api/users - Create a new user
 export const createUser = async (c: Context) => {
-  try {
-    if (!db) {
-      throw new HTTPException(500, { message: "Database is unavailable" });
-    }
+  const body = await c.req.json();
 
-    const body = await c.req.json();
-
-    if (!body.email || !body.hashPassword) {
-      throw new HTTPException(400, {
-        message: "Email and password are required",
-      });
-    }
-
-    const newUser = await db.user.create({
-      data: {
-        email: body.email,
-        hashPassword: body.hashPassword,
-        metadata: body.metadata || {},
-      },
-      select: {
-        id: true,
-        email: true,
-        metadata: true,
-      },
+  if (!body.email || !body.hashPassword) {
+    throw new HTTPException(400, {
+      message: "Email and password are required",
     });
-
-    return c.json(
-      {
-        message: "User created successfully!",
-        user: newUser,
-      },
-      201
-    );
-  } catch (error) {
-    if (error instanceof HTTPException) {
-      throw error;
-    }
-
-    console.error("Failed to create user:", error);
-    throw new HTTPException(500, { message: "Failed to create user" });
   }
+
+  const newUser = await db.user.create({
+    data: {
+      email: body.email,
+      hashPassword: body.hashPassword,
+      metadata: body.metadata || {},
+    },
+    select: {
+      id: true,
+      email: true,
+      metadata: true,
+    },
+  });
+
+  return c.json(
+    {
+      message: "User created successfully!",
+      user: newUser,
+    },
+    201
+  );
 };
 
 // GET /api/users/:id - Get a specific user
 export const getUser = async (c: Context) => {
-  try {
-    if (!db) {
-      throw new HTTPException(500, { message: "Database is unavailable" });
-    }
+  const userId = parseInt(c.req.param("id"));
 
-    const userId = parseInt(c.req.param("id"));
+  if (isNaN(userId)) {
+    throw new HTTPException(400, { message: "Invalid user ID" });
+  }
 
-    if (isNaN(userId)) {
-      throw new HTTPException(400, { message: "Invalid user ID" });
-    }
-
-    const user = await db.user.findUnique({
-      where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        metadata: true,
-        verifications: {
-          select: {
-            id: true,
-            code: true,
-            createdAt: true,
-            expiresAt: true,
-            isUsed: true,
-          },
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      email: true,
+      metadata: true,
+      verifications: {
+        select: {
+          id: true,
+          code: true,
+          createdAt: true,
+          expiresAt: true,
+          isUsed: true,
         },
       },
-    });
+    },
+  });
 
-    if (!user) {
-      throw new HTTPException(404, { message: "User not found" });
-    }
-
-    return c.json({ user });
-  } catch (error) {
-    if (error instanceof Error) {
-      throw error;
-    }
-
-    console.error("Failed to fetch user:", error);
-    throw new HTTPException(500, { message: "Failed to fetch user" });
+  if (!user) {
+    throw new HTTPException(404, { message: "User not found" });
   }
+
+  return c.json({ user });
 };
 
 // PUT /api/users/:id - Update a user
 export const updateUser = async (c: Context) => {
-  try {
-    if (!db) {
-      throw new HTTPException(500, { message: "Database is unavailable" });
-    }
+  const userId = parseInt(c.req.param("id"));
 
-    const userId = parseInt(c.req.param("id"));
-
-    if (isNaN(userId)) {
-      throw new HTTPException(400, { message: "Invalid user ID" });
-    }
-
-    const body = await c.req.json();
-
-    const existingUser = await db.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!existingUser) {
-      throw new HTTPException(404, { message: "User not found" });
-    }
-
-    const updateData: any = {};
-    if (body.email) updateData.email = body.email;
-    if (body.hashPassword) updateData.hashPassword = body.hashPassword;
-    if (body.metadata !== undefined) updateData.metadata = body.metadata;
-
-    const updatedUser = await db.user.update({
-      where: { id: userId },
-      data: updateData,
-      select: {
-        id: true,
-        email: true,
-        metadata: true,
-      },
-    });
-
-    return c.json({
-      message: "User updated successfully!",
-      user: updatedUser,
-    });
-  } catch (error) {
-    if (error instanceof Error) {
-      throw error;
-    }
-
-    console.error("Failed to update user:", error);
-    throw new HTTPException(500, { message: "Failed to update user" });
+  if (isNaN(userId)) {
+    throw new HTTPException(400, { message: "Invalid user ID" });
   }
+
+  const body = await c.req.json();
+
+  const existingUser = await db.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!existingUser) {
+    throw new HTTPException(404, { message: "User not found" });
+  }
+
+  const updateData: any = {};
+  if (body.email) updateData.email = body.email;
+  if (body.hashPassword) updateData.hashPassword = body.hashPassword;
+  if (body.metadata !== undefined) updateData.metadata = body.metadata;
+
+  const updatedUser = await db.user.update({
+    where: { id: userId },
+    data: updateData,
+    select: {
+      id: true,
+      email: true,
+      metadata: true,
+    },
+  });
+
+  return c.json({
+    message: "User updated successfully!",
+    user: updatedUser,
+  });
 };
 
 // DELETE /api/users/:id - Delete a user
 export const deleteUser = async (c: Context) => {
-  try {
-    if (!db) {
-      throw new HTTPException(500, { message: "Database is unavailable" });
-    }
+  const userId = parseInt(c.req.param("id"));
 
-    const userId = parseInt(c.req.param("id"));
-
-    if (isNaN(userId)) {
-      throw new HTTPException(400, { message: "Invalid user ID" });
-    }
-
-    const existingUser = await db.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!existingUser) {
-      throw new HTTPException(404, { message: "User not found" });
-    }
-
-    await db.user.delete({
-      where: { id: userId },
-    });
-
-    return c.json({
-      message: "User deleted successfully!",
-    });
-  } catch (error) {
-    if (error instanceof Error) {
-      throw error;
-    }
-
-    console.error("Failed to delete user:", error);
-    throw new HTTPException(500, { message: "Failed to delete user" });
+  if (isNaN(userId)) {
+    throw new HTTPException(400, { message: "Invalid user ID" });
   }
+
+  const existingUser = await db.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!existingUser) {
+    throw new HTTPException(404, { message: "User not found" });
+  }
+
+  await db.user.delete({
+    where: { id: userId },
+  });
+
+  return c.json({
+    message: "User deleted successfully!",
+  });
 };

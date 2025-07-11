@@ -3,18 +3,17 @@ import { serve } from "@hono/node-server";
 import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 import { logger } from "hono/logger";
-import { auth } from "./middlewares/auth.middleware";
+import { apiAuthenticator } from "./middlewares/api.middleware";
 import { getRedisClient, initRedis } from "./lib/redis/client";
 import { db } from "./lib/db/client";
 import { HTTPException } from "hono/http-exception";
 import { authRoutes } from "./routes/auth.routes";
-
-const app = new Hono();
+import { app } from "./lib/hono/app";
 
 app.use(secureHeaders());
 app.use(cors());
 app.use(logger());
-// app.use("/api/*", auth);
+// app.use("/api/*", apiAuthenticator);
 
 app.onError((err, c) => {
   if (err instanceof HTTPException) {
@@ -60,59 +59,7 @@ app.get("/health", async (c) => {
   }
 });
 
-app.get("/api/cache-test", async (c) => {
-  const redis = await getRedisClient();
-
-  await redis.setEx("test-key", 60, "Added to database!");
-
-  const value = await redis.get("test-key");
-
-  try {
-    return c.json({
-      message: "Redis is working!",
-      stored: "test-key",
-      retrieved: value,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-    return c.json(
-      {
-        error: "Redis operation failed",
-        details: errorMessage,
-      },
-      500
-    );
-  }
-});
-
-app.get("/api/users", async (c) => {
-  try {
-    if (!db) {
-      return c.json({ message: "Database client not found" }, 500);
-    }
-    const users = await db.user.findMany();
-    return c.json({
-      users,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error("Database query failed:", error);
-    return c.json(
-      {
-        error: "Database connection failed",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      500
-    );
-  }
-});
-
-app.get("/api/data", (c) => {
-  return c.json({ message: "Anyone can access this API!" });
-});
-
-app.route("/auth", authRoutes);
+app.route("/api/auth", authRoutes);
 
 const port = 3000;
 

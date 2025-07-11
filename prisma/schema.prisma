@@ -90,13 +90,13 @@ model UserSession {
 
 model VerificationCode {
   id            Int          @id @default(autoincrement())
-  code          String       @unique
+  code          String
   createdAt     DateTime     @default(now())
   expiresAt     DateTime
   verifiedAt    DateTime
-  isUsed        Boolean
-  userId        Int?
-  user          User?        @relation(fields: [userId], references: [id])
+  isUsed        Boolean      @default(false)
+  userId        Int
+  user          User         @relation(fields: [userId], references: [id])
   projectUser   ProjectUser? @relation(fields: [projectUserId], references: [id])
   projectUserId Int?
 
