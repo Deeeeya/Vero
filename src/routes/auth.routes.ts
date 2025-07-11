@@ -13,6 +13,7 @@ import {
   loginSchema,
   resetPasswordSchema,
   updateProfileSchema,
+  forgotPasswordSchema,
 } from "../schemas/auth.schema";
 import { auth } from "../middlewares/auth.middleware";
 
@@ -34,7 +35,7 @@ authRoutes.post(
   zValidator("json", resetPasswordSchema),
   resetPassword
 ); // logged in (take current password and new password)
-authRoutes.post("/forgot-password"); // logged out (resets password with token)
+authRoutes.post("/forgot-password", zValidator("json", forgotPasswordSchema)); // logged out (resets password with token)
 authRoutes.post("/send-code"); // User must exist in database to send 6-digit code (numbers only) && Don't return code in request, only send. Create verification code in db
 authRoutes.post("/verify-code");
 

@@ -21,3 +21,9 @@ export const resetPasswordSchema = z.object({
   newPassword: z.string(),
   confirmNewPassword: z.string(),
 });
+
+export const forgotPasswordSchema = z.object({
+  token: z.string(),
+  newPassword: z.string(),
+  confirmNewPassword: z.string(),
+});
