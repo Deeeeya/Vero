@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 
-const sendEmail = new Resend(process.env.RESEND_API_KEY);
+export const sendEmail = new Resend(process.env.RESEND_API_KEY);
 
 // resend.emails.send({
 //   from: 'onboarding@resend.dev',

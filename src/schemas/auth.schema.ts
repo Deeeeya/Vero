@@ -22,6 +22,10 @@ export const resetPasswordSchema = z.object({
   confirmNewPassword: z.string(),
 });
 
+export const requestResetSchema = z.object({
+  email: z.string().email("Invalid email"),
+});
+
 export const forgotPasswordSchema = z.object({
   token: z.string(),
   newPassword: z.string(),
