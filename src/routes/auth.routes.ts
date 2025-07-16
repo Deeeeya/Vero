@@ -8,6 +8,8 @@ import {
   resetPassword,
   requestReset,
   forgotPassword,
+  sendVerificationEmail,
+  verifyEmail,
 } from "../controllers/auth.controller";
 import { zValidator } from "@hono/zod-validator";
 import {
@@ -17,6 +19,7 @@ import {
   updateProfileSchema,
   forgotPasswordSchema,
   requestResetSchema,
+  sendVerificationSchema,
 } from "../schemas/auth.schema";
 import { auth } from "../middlewares/auth.middleware";
 
@@ -48,6 +51,12 @@ authRoutes.post(
   zValidator("json", forgotPasswordSchema),
   forgotPassword
 );
+authRoutes.post(
+  "/send-verification",
+  zValidator("json", sendVerificationSchema),
+  sendVerificationEmail
+); // Verify email for newly registered users with email link
+authRoutes.get("/verify-email", verifyEmail);
 authRoutes.post("/send-code"); // User must exist in database to send 6-digit code (numbers only) && Don't return code in request, only send. Create verification code in db
 authRoutes.post("/verify-code");
 

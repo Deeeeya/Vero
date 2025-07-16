@@ -13,6 +13,7 @@ model User {
   email         String             @unique
   hashPassword  String
   metadata      Json
+  emailVerified Boolean            @default(false)
   verifications VerificationCode[]
 
   @@index(fields: [email])
@@ -95,6 +96,15 @@ model UserSession {
   user              ProjectUser @relation(fields: [userId], references: [id])
 
   @@map("userSessions")
+}
+
+model emailVerificationToken {
+  id        Int      @id @default(autoincrement())
+  email     String
+  token     String   @unique
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
 }
 
 model VerificationCode {

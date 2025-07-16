@@ -31,17 +31,19 @@ export const register = async (c: Context) => {
       email: body.email,
       hashPassword: hashPassword,
       metadata: body.metadata || {},
+      emailVerified: false,
     },
     select: {
       id: true,
       email: true,
       metadata: true,
+      emailVerified: true,
     },
   });
 
   return c.json(
     {
-      message: "User registered",
+      message: "User registered. Please verify email",
       user: newUser,
     },
     201
@@ -383,3 +385,179 @@ export const forgotPassword = async (c: Context) => {
       "Password has been reset successfully. Please log in with your new password.",
   });
 };
+
+// POST /api/auth/send-verification
+export const sendVerificationEmail = async (c: Context) => {
+  // initialize body
+  // check if user with this email exists
+  // check if user is already verified
+  // generate verification token
+  // check if env variable exists
+  // store verification token in database
+  // send verificaiton email
+  // check if email sending failed
+  // return json if complete
+  const body = await c.req.json();
+
+  const user = await db.user.findUnique({
+    where: { email: body.email },
+    select: {
+      id: true,
+      email: true,
+      emailVerified: true,
+    },
+  });
+
+  if (!user) {
+    throw new HTTPException(404, { message: "User not found" });
+  }
+
+  if (user.emailVerified) {
+    throw new HTTPException(400, {
+      message: "Email has already been verified",
+    });
+  }
+
+  const verificationToken = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 10000); // 24 hr
+
+  if (!process.env.BACKEND_URL) {
+    throw new HTTPException(500, { message: "Server error" });
+  }
+
+  const tokenRecord = await db.emailVerificationToken.create({
+    data: {
+      email: body.email,
+      token: verificationToken,
+      expiresAt: expiresAt,
+      used: false,
+    },
+  });
+
+  const emailResult = await sendEmail.emails.send({
+    from: "noreply@yourapp.com",
+    to: body.email,
+    subject: "Verify Your Email Address",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #333;">Welcome! Please verify your email</h2>
+        <p>Hello,</p>
+        <p>Thank you for registering with our service. To complete your registration, please verify your email address by clicking the button below:</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${process.env.BACKEND_URL}/api/auth/verify-email?token=${verificationToken}" 
+             style="background-color: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block;">
+            Verify Email Address
+          </a>
+        </div>
+        
+        <p>Or copy and paste this link into your browser:</p>
+        <p style="word-break: break-all; color: #007bff;">
+          ${process.env.BACKEND_URL}/api/auth/verify-email?token=${verificationToken}
+        </p>
+        
+        <p>This verification link will expire in 24 hours.</p>
+        <p>If you didn't create an account with us, please ignore this email.</p>
+        
+        <p>Best regards,<br>Your App Team</p>
+      </div>
+    `,
+  });
+
+  if (emailResult.error) {
+    throw new HTTPException(400, { message: "Failed to send email" });
+  }
+
+  return c.json({
+    message: "Email has been sent",
+  });
+};
+
+// POST /api/auth/verify-email
+export const verifyEmail = async (c: Context) => {
+  // get token from URL query parameter
+  // find valid verification token
+  // find user associated with this token
+  // check if user is verified
+  // update user as verified
+  // mark verification token as used
+  // return success HTML page (user sees this in their browser)
+  const token = c.req.query("token");
+
+  if (!token) {
+    throw new HTTPException(400, { message: "Token not found" });
+  }
+
+  const verificationToken = await db.emailVerificationToken.findFirst({
+    where: {
+      token: token,
+      expiresAt: { gt: new Date() },
+      used: false,
+    },
+  });
+
+  if (!verificationToken) {
+    throw new HTTPException(400, { message: "Invalid token" });
+  }
+
+  const user = await db.user.findUnique({
+    where: { email: verificationToken.email },
+    select: {
+      id: true,
+      email: true,
+      emailVerified: true,
+    },
+  });
+
+  if (!user) {
+    throw new HTTPException(400, { message: "Invalid user" });
+  }
+
+  if (user.emailVerified) {
+    return c.html(`
+      <html>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+          <h2 style="color: #28a745;">Email Already Verified!</h2>
+          <p>Your email address has already been verified.</p>
+          <p>You can now log in to your account.</p>
+        </body>
+      </html>
+    `);
+  }
+
+  const updatedUser = await db.user.update({
+    where: { id: user.id },
+    data: {
+      emailVerified: true,
+    },
+  });
+
+  const usedToken = await db.emailVerificationToken.update({
+    where: { id: verificationToken.id },
+    data: { used: true },
+  });
+
+  if (!usedToken) {
+    throw new HTTPException(400, { message: "Token error" });
+  }
+
+  return c.html(`
+    <html>
+      <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+        <h2 style="color: #28a745;">Email Verified Successfully!</h2>
+        <p>Thank you for verifying your email address.</p>
+        <p>Your account is now fully activated and you can log in.</p>
+        <a href="${process.env.FRONTEND_URL || "http://localhost:3001"}/login" 
+           style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+          Go to Login
+        </a>
+      </body>
+    </html>
+  `);
+};
+
+// POST /api/auth/send-code
+export const sendCode = async (c: Context) => {};
+
+// POST /api/auth/verify-code
+export const verifyCode = async (c: Context) => {};

@@ -31,3 +31,7 @@ export const forgotPasswordSchema = z.object({
   newPassword: z.string(),
   confirmNewPassword: z.string(),
 });
+
+export const sendVerificationSchema = z.object({
+  email: z.string().email("Invalid email"),
+});
