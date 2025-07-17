@@ -75,6 +75,21 @@ export const login = async (c: Context) => {
     throw new HTTPException(401, { message: "Invalid email or password" });
   }
 
+  if (!user.emailVerified) {
+    // 'resetEndpoint' is an API endpoint that frontend can use to resend verification email by calling this endpoint if 'code' exists
+    return c.json(
+      {
+        error: "Please very your email before logging in",
+        code: "EMAIL_NOT_VERIFIED",
+        data: {
+          email: user.email,
+          resendEndpoint: "/api/auth/send-verification",
+        },
+      },
+      403
+    );
+  }
+
   const session = await db.session.create({
     data: {
       userId: user.id,
@@ -98,6 +113,7 @@ export const login = async (c: Context) => {
       id: user.id,
       email: user.email,
       metadata: user.metadata,
+      emailVerified: user.emailVerified,
     },
     session: session,
   });
@@ -414,12 +430,12 @@ export const sendVerificationEmail = async (c: Context) => {
 
   if (user.emailVerified) {
     throw new HTTPException(400, {
-      message: "Email has already been verified",
+      message: "Email is already verified",
     });
   }
 
   const verificationToken = crypto.randomUUID();
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 10000); // 24 hr
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hr
 
   if (!process.env.BACKEND_URL) {
     throw new HTTPException(500, { message: "Server error" });
@@ -469,7 +485,7 @@ export const sendVerificationEmail = async (c: Context) => {
   }
 
   return c.json({
-    message: "Email has been sent",
+    message: "Verification email sent successfully. Please check your email.",
   });
 };
 
@@ -531,6 +547,10 @@ export const verifyEmail = async (c: Context) => {
       emailVerified: true,
     },
   });
+
+  if (!updatedUser) {
+    throw new HTTPException(500, { message: "Verification failed" });
+  }
 
   const usedToken = await db.emailVerificationToken.update({
     where: { id: verificationToken.id },
