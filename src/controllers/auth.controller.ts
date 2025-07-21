@@ -255,6 +255,7 @@ export const resetPassword = async (c: Context) => {
   });
 
   return c.json({
+    user: updatedUser,
     message: "Password has been updated",
   });
 };
