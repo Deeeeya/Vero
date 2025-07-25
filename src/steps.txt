@@ -10,3 +10,6 @@
 // creating project routes -- Complete
 // create a controller to create/update/delete/read -- In Progress
 // prisma
+
+// Test all project endpoints (add zod validation to all of them)
+// create another controller called projectAuth, reuse stuff from auth

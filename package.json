@@ -2,7 +2,8 @@
   "scripts": {
     "dev": "ts-node-dev ./src/server.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "migrate": "npx prisma migrate dev --name init"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

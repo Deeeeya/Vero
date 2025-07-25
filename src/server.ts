@@ -16,6 +16,7 @@ app.use(logger());
 // app.use("/api/*", apiAuthenticator);
 
 app.onError((err, c) => {
+  console.log(err);
   if (err instanceof HTTPException) {
     return err.getResponse();
   }

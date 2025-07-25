@@ -9,12 +9,13 @@ datasource db {
 }
 
 model User {
-  id            Int                @id @default(autoincrement())
-  email         String             @unique
-  hashPassword  String
-  metadata      Json
-  emailVerified Boolean            @default(false)
-  verifications VerificationCode[]
+  id                 Int                  @id @default(autoincrement())
+  email              String               @unique
+  hashPassword       String
+  metadata           Json
+  emailVerified      Boolean              @default(false)
+  verifications      VerificationCode[]
+  verificationTokens VerificationTokens[]
 
   @@index(fields: [email])
   @@map("users")
@@ -35,13 +36,24 @@ model ProjectUser {
   @@map("projectUsers")
 }
 
-model passwordReset {
-  id        Int      @id @default(autoincrement())
+enum TokenType {
+  email_verification
+  password_reset
+}
+
+model VerificationTokens {
+  id        Int       @id @default(autoincrement())
+  userId    Int
   email     String
-  token     String   @unique
+  token     String    @unique
   expiresAt DateTime
-  used      Boolean  @default(false)
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  used      Boolean   @default(false)
+  type      TokenType
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("VerificationTokens")
 }
 
 model Project {
@@ -96,15 +108,6 @@ model UserSession {
   user              ProjectUser @relation(fields: [userId], references: [id])
 
   @@map("userSessions")
-}
-
-model emailVerificationToken {
-  id        Int      @id @default(autoincrement())
-  email     String
-  token     String   @unique
-  expiresAt DateTime
-  used      Boolean  @default(false)
-  createdAt DateTime @default(now())
 }
 
 model VerificationCode {

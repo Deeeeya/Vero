@@ -102,7 +102,7 @@ export const getProject = async (c: Context) => {
   });
 };
 
-// PUT /api/projects/:id - Updatea a project
+// PUT /api/projects/:id - Update a project
 export const updateProject = async (c: Context) => {
   const projectId = parseInt(c.req.param("id"));
 
