@@ -55,12 +55,12 @@ export const createProjectUser = async (c: Context) => {
     }
 
     const existingProjectUser = await db.projectUser.findFirst({
-      where: { projectId: body.projectId },
+      where: { projectId: body.projectId, email: body.email },
     });
 
     if (existingProjectUser) {
       throw new HTTPException(400, {
-        message: "User already exists in this project",
+        message: "Email already exists in this project",
       });
     }
   }
