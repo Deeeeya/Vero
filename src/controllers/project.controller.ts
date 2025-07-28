@@ -110,7 +110,7 @@ export const updateProject = async (c: Context) => {
     throw new HTTPException(400, { message: "Invalid project ID" });
   }
 
-  const existingProject = await db.user.findUnique({
+  const existingProject = await db.project.findUnique({
     where: { id: projectId },
   });
 
