@@ -140,7 +140,7 @@ export const getProfile = async (c: Context) => {
   }
 
   const user = await db.user.findUnique({
-    where: { id: parseInt(userId) },
+    where: { id: userId },
     omit: { hashPassword: true },
   });
 
@@ -157,7 +157,7 @@ export const getProfile = async (c: Context) => {
 // PUT /api/auth/profile - Update user profile
 
 export const updateProfile = async (c: Context) => {
-  const userId = parseInt(c.get("userId"));
+  const userId = c.get("userId");
 
   if (!userId) {
     throw new HTTPException(401, { message: "Unauthorized" });
@@ -193,7 +193,7 @@ export const updateProfile = async (c: Context) => {
 
 // POST /api/auth/reset-password
 export const resetPassword = async (c: Context) => {
-  const userId = parseInt(c.get("userId"));
+  const userId = c.get("userId");
 
   if (!userId) {
     throw new HTTPException(401, { message: "Unauthorized" });

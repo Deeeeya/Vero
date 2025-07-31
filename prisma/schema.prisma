@@ -9,27 +9,28 @@ datasource db {
 }
 
 model User {
-  id                 Int                  @id @default(autoincrement())
+  id                 String               @id @default(uuid())
   email              String               @unique
   hashPassword       String
   metadata           Json
   emailVerified      Boolean              @default(false)
   verifications      VerificationCode[]
   verificationTokens VerificationTokens[]
+  projects           Project[]
 
   @@index(fields: [email])
   @@map("users")
 }
 
 model ProjectUser {
-  id            Int                @id @default(autoincrement())
+  id            String             @id @default(uuid())
   email         String             @unique
   hashPassword  String
   metadata      Json
   sessions      UserSession[]
   verifications VerificationCode[]
   project       Project?           @relation(fields: [projectId], references: [id])
-  projectId     Int?
+  projectId     String?
   magicLinks    MagicLink[]
 
   @@index(fields: [email])
@@ -42,8 +43,8 @@ enum TokenType {
 }
 
 model VerificationTokens {
-  id        Int       @id @default(autoincrement())
-  userId    Int
+  id        String    @id @default(uuid())
+  userId    String
   email     String
   token     String    @unique
   expiresAt DateTime
@@ -57,7 +58,7 @@ model VerificationTokens {
 }
 
 model Project {
-  id            Int           @id @default(autoincrement())
+  id            String        @id @default(uuid())
   name          String
   description   String?
   platform      Platform      @default(all)
@@ -65,15 +66,17 @@ model Project {
   refreshTTL    Int           @default(43200)
   singleSession Boolean       @default(false)
   users         ProjectUser[]
+  userId        String?
+  user          User?         @relation(fields: [userId], references: [id])
 
   @@map("projects")
 }
 
 model MagicLink {
-  id        Int         @id @default(autoincrement())
+  id        String      @id @default(uuid())
   token     String
   user      ProjectUser @relation(fields: [userId], references: [id])
-  userId    Int
+  userId    String
   expiresAt DateTime
   usedAt    DateTime
   isUsed    Boolean
@@ -86,7 +89,7 @@ model MagicLink {
 
 model Session {
   id        String   @id @default(uuid())
-  userId    Int
+  userId    String
   metadata  Json
   createdAt DateTime @default(now())
   expiresAt DateTime
@@ -95,12 +98,12 @@ model Session {
 }
 
 model UserSession {
-  id                Int         @id @default(autoincrement())
+  id                String      @id @default(uuid())
   createdAt         DateTime    @default(now())
   revokedAt         DateTime
   accessExpiration  DateTime
   refreshExpiration DateTime
-  userId            Int
+  userId            String
   accessToken       String
   refreshToken      String
   ipAddress         String?
@@ -111,16 +114,16 @@ model UserSession {
 }
 
 model VerificationCode {
-  id            Int          @id @default(autoincrement())
+  id            String       @id @default(uuid())
   code          String
   createdAt     DateTime     @default(now())
   expiresAt     DateTime
   verifiedAt    DateTime
   isUsed        Boolean      @default(false)
-  userId        Int
+  userId        String
   user          User         @relation(fields: [userId], references: [id])
   projectUser   ProjectUser? @relation(fields: [projectUserId], references: [id])
-  projectUserId Int?
+  projectUserId String?
 
   @@map("verificationCodes")
 }

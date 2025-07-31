@@ -7,21 +7,20 @@ import {
   updateProject,
   deleteProject,
 } from "../controllers/project.controller";
-import {
-  createProjectSchema,
-  updateProjectSchema,
-} from "../schemas/project.schema";
+import { projectSchema, updateProjectSchema } from "../schemas/project.schema";
+import { auth } from "../middlewares/auth.middleware";
 
 const projectRoutes = new Hono();
 
-projectRoutes.get("/", getProjects);
-projectRoutes.post("/", zValidator("json", createProjectSchema), createProject);
-projectRoutes.get("/:id", getProject);
+projectRoutes.get("/", auth, getProjects);
+projectRoutes.post("/", auth, zValidator("json", projectSchema), createProject);
+projectRoutes.get("/:id", auth, getProject);
 projectRoutes.put(
   "/:id",
+  auth,
   zValidator("json", updateProjectSchema),
   updateProject
 );
-projectRoutes.delete("/:id", deleteProject);
+projectRoutes.delete("/:id", auth, deleteProject);
 
 export { projectRoutes };

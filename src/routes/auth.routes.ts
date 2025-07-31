@@ -23,19 +23,18 @@ import { auth } from "../middlewares/auth.middleware";
 
 const authRoutes = new Hono();
 
+authRoutes.use("/profile/*", auth);
 authRoutes.post("/register", zValidator("json", registerSchema), register);
 authRoutes.post("/login", zValidator("json", loginSchema), login);
 authRoutes.delete("/logout", logout);
-authRoutes.get("/profile", auth, getProfile); // Get user information (fetch session with session id and include user)
+authRoutes.get("/profile", getProfile); // Get user information (fetch session with session id and include user)
 authRoutes.put(
   "/profile",
-  auth,
   zValidator("json", updateProfileSchema),
   updateProfile
 ); // Updates user information
 authRoutes.post(
-  "/reset-password",
-  auth,
+  "/profile/reset-password",
   zValidator("json", resetPasswordSchema),
   resetPassword
 ); // logged in (take current password and new password)

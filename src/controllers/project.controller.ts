@@ -1,9 +1,11 @@
 import { HTTPException } from "hono/http-exception";
 import { Context } from "hono";
 import { db } from "../lib/db/client";
+import { filterUndefined } from "../lib/utils";
 
 // GET /api/projects - Get all projects
 export const getProjects = async (c: Context) => {
+  const userId = c.get("userId");
   const projects = await db.project.findMany({
     select: {
       id: true,
@@ -13,13 +15,8 @@ export const getProjects = async (c: Context) => {
       accessTTL: true,
       refreshTTL: true,
       singleSession: true,
-      users: {
-        select: {
-          id: true,
-          email: true,
-        },
-      },
     },
+    where: { userId: userId },
   });
 
   return c.json({
@@ -28,16 +25,14 @@ export const getProjects = async (c: Context) => {
   });
 };
 
-// POST /api/projects - Create a new project
+// POST /api/projects/create-project - Create a new project
 export const createProject = async (c: Context) => {
   const body = await c.req.json();
-
-  if (!body.name) {
-    throw new HTTPException(400, { message: "Name is required" });
-  }
+  const userId = c.get("userId");
 
   const newProject = await db.project.create({
     data: {
+      userId: userId,
       name: body.name,
       description: body.description || null,
       platform: body.platform || "all",
@@ -47,47 +42,32 @@ export const createProject = async (c: Context) => {
     },
     select: {
       id: true,
-      name: true,
-      description: true,
-      platform: true,
-      accessTTL: true,
-      refreshTTL: true,
-      singleSession: true,
     },
   });
 
   return c.json(
     {
       message: "Project created successfully!",
-      project: newProject,
     },
     201
   );
 };
 
-// GET /api/projects/:id - Get a specific project
+// GET /api/projects/get-project:id - Get a specific project
 export const getProject = async (c: Context) => {
-  const projectId = parseInt(c.req.param("id"));
+  const projectId = c.req.param("id");
+  const userId = c.get("userId");
 
-  if (isNaN(projectId)) {
+  if (!projectId) {
     throw new HTTPException(400, { message: "Invalid project ID" });
   }
 
   const project = await db.project.findUnique({
-    where: { id: projectId },
+    where: { id: projectId, userId: userId },
     include: {
-      users: {
+      _count: {
         select: {
-          id: true,
-          email: true,
-          metadata: true,
-          sessions: {
-            select: {
-              id: true,
-              accessExpiration: true,
-              refreshExpiration: true,
-            },
-          },
+          users: true,
         },
       },
     },
@@ -104,14 +84,16 @@ export const getProject = async (c: Context) => {
 
 // PUT /api/projects/:id - Update a project
 export const updateProject = async (c: Context) => {
-  const projectId = parseInt(c.req.param("id"));
+  const projectId = c.req.param("id");
 
-  if (isNaN(projectId)) {
+  const userId = c.get("userId");
+
+  if (!projectId) {
     throw new HTTPException(400, { message: "Invalid project ID" });
   }
 
   const existingProject = await db.project.findUnique({
-    where: { id: projectId },
+    where: { id: projectId, userId: userId },
   });
 
   if (!existingProject) {
@@ -120,25 +102,13 @@ export const updateProject = async (c: Context) => {
 
   const body = await c.req.json();
 
-  const updateData: any = {};
-  if (body.name) updateData.name = body.name;
-  if (body.description !== undefined) updateData.description = body.description;
-  if (body.platform) updateData.platform = body.platform;
-  if (body.accessTTL) updateData.accessTTL = body.accessTTL;
-  if (body.refreshTTL) updateData.refreshTTL = body.refreshTTL;
-  if (body.singleSession !== undefined)
-    updateData.singleSession = body.singleSession;
+  const updateData = filterUndefined(body);
 
   const updatedProject = await db.project.update({
-    where: { id: projectId },
+    where: { id: projectId, userId: userId },
     data: updateData,
     select: {
       id: true,
-      description: true,
-      platform: true,
-      accessTTL: true,
-      refreshTTL: true,
-      singleSession: true,
     },
   });
 
@@ -150,14 +120,15 @@ export const updateProject = async (c: Context) => {
 
 // DELETE /api/projects/:id - Delete a project
 export const deleteProject = async (c: Context) => {
-  const projectId = parseInt(c.req.param("id"));
+  const projectId = c.req.param("id");
+  const userId = c.get("userId");
 
-  if (isNaN(projectId)) {
+  if (!projectId) {
     throw new HTTPException(400, { message: "Invalid project ID" });
   }
 
   const existingProject = await db.project.findUnique({
-    where: { id: projectId },
+    where: { id: projectId, userId: userId },
   });
 
   if (!existingProject) {
@@ -165,7 +136,7 @@ export const deleteProject = async (c: Context) => {
   }
 
   await db.project.delete({
-    where: { id: projectId },
+    where: { id: projectId, userId: userId },
   });
 
   return c.json({

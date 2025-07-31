@@ -5,6 +5,7 @@ import { db } from "../lib/db/client";
 // checks if user is logged in
 
 const auth = createMiddleware(async (c, next) => {
+  console.log("auth checked");
   // Get auth headers
   // Get the session ID, check if there is an existing session ID
   // If no session ID, then return 401 unauthorized

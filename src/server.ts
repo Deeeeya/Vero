@@ -8,7 +8,9 @@ import { getRedisClient, initRedis } from "./lib/redis/client";
 import { db } from "./lib/db/client";
 import { HTTPException } from "hono/http-exception";
 import { authRoutes } from "./routes/auth.routes";
+import { projectRoutes } from "./routes/projects.routes";
 import { app } from "./lib/hono/app";
+import { auth } from "./middlewares/auth.middleware";
 
 app.use(secureHeaders());
 app.use(cors());
@@ -61,6 +63,8 @@ app.get("/health", async (c) => {
 });
 
 app.route("/api/auth", authRoutes);
+app.use("/api/projects/*", auth);
+app.route("/api/projects", projectRoutes);
 
 const port = 3000;
 

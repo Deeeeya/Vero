@@ -97,9 +97,9 @@ export const createProjectUser = async (c: Context) => {
 
 // GET /api/projectUsers/:id - get a projectUser
 export const getProjectUser = async (c: Context) => {
-  const projectUserId = parseInt(c.req.param("id"));
+  const projectUserId = c.req.param("id");
 
-  if (isNaN(projectUserId)) {
+  if (!projectUserId) {
     throw new HTTPException(400, { message: "Invalid project user ID" });
   }
 
@@ -157,16 +157,16 @@ export const getProjectUser = async (c: Context) => {
 
 // PUT /api/projectUsers/:id - update a projectUser
 export const updateProjectUser = async (c: Context) => {
-  const projectUserId = parseInt(c.req.param("id"));
+  const projectUserId = c.req.param("id");
 
-  if (isNaN(projectUserId)) {
+  if (!projectUserId) {
     throw new HTTPException(400, { message: "Invalid project user ID" });
   }
 
   const body = await c.req.json();
 
   const existingProjectUser = await db.projectUser.findUnique({
-    where: { id: projectUserId },
+    where: { id: projectUserId, email: body.email },
   });
 
   if (!existingProjectUser) {
@@ -223,8 +223,9 @@ export const updateProjectUser = async (c: Context) => {
 
 // DELETE /api/projectUsers/:id - delete a projectUser
 export const deleteProjectUser = async (c: Context) => {
-  const projectUserId = parseInt(c.req.param("id"));
-  if (isNaN(projectUserId)) {
+  const projectUserId = c.req.param("id");
+
+  if (!projectUserId) {
     throw new HTTPException(400, { message: "Invalid project user ID" });
   }
 
