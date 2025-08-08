@@ -250,3 +250,38 @@ export const deleteProjectUser = async (c: Context) => {
     message: "Project user successfully deleted!",
   });
 };
+
+export const toggleProjectUser = async (c: Context) => {
+  const projectUserId = c.req.param("id");
+
+  if (!projectUserId) {
+    throw new HTTPException(400, { message: "Invalid project user ID" });
+  }
+
+  const existingProjectUser = await db.projectUser.findUnique({
+    where: { id: projectUserId },
+  });
+
+  if (!existingProjectUser) {
+    throw new HTTPException(404, { message: "Invalid project user" });
+  }
+
+  const body = await c.req.json();
+
+  const updatedProjectUser = await db.projectUser.update({
+    where: { id: projectUserId },
+    data: {
+      enabled: body.enabled,
+    },
+    select: {
+      id: true,
+      email: true,
+      enabled: true,
+    },
+  });
+
+  return c.json({
+    message: `Project user ${body.enabled ? "enabled" : "disabled"} successfully!`,
+    projectUser: updatedProjectUser,
+  });
+};

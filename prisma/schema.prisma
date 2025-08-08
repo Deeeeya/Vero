@@ -27,6 +27,7 @@ model ProjectUser {
   email         String             @unique
   hashPassword  String
   metadata      Json
+  enabled       Boolean            @default(true)
   sessions      UserSession[]
   verifications VerificationCode[]
   project       Project?           @relation(fields: [projectId], references: [id])

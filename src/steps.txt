@@ -14,11 +14,11 @@
 // Test all project endpoints (add zod validation to all of them)
 // create another controller called projectAuth, reuse stuff from auth
 
-// create a projectUser with email and password
-// list all users
-// when you get all users, do NOT select password
-// updating a user
-// delete a user
+// create a projectUser with email and password (Complete)
+// list all users (Complete)
+// when you get all users, do NOT select password (Complete)
+// updating a user (Complete)
+// delete a user (Complete)
 // create a route specifically for disabling/enabling a user "projectUsers/toggle"
     - If they are disabled they cant sign in
 // create zod schemas for creating records/updating etc
