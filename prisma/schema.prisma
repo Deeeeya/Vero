@@ -22,6 +22,21 @@ model User {
   @@map("users")
 }
 
+model Project {
+  id            String        @id @default(uuid())
+  name          String
+  description   String?
+  platform      Platform      @default(all)
+  accessTTL     Int           @default(900)
+  refreshTTL    Int           @default(43200)
+  singleSession Boolean       @default(false)
+  users         ProjectUser[]
+  userId        String?
+  user          User?         @relation(fields: [userId], references: [id])
+
+  @@map("projects")
+}
+
 model ProjectUser {
   id            String             @id @default(uuid())
   email         String             @unique
@@ -36,6 +51,17 @@ model ProjectUser {
 
   @@index(fields: [email])
   @@map("projectUsers")
+}
+
+model ProjectAuth {
+  id                 String               @id @default(uuid())
+  email              String               @unique
+  hashPassword       String
+  metadata           Json
+  verificationTokens VerificationTokens[]
+
+  @@index(fields: [email])
+  @@map("projectAuth")
 }
 
 enum TokenType {
@@ -53,24 +79,11 @@ model VerificationTokens {
   used      Boolean   @default(false)
   type      TokenType
 
-  user User @relation(fields: [userId], references: [id])
+  user          User         @relation(fields: [userId], references: [id])
+  ProjectAuth   ProjectAuth? @relation(fields: [projectAuthId], references: [id])
+  projectAuthId String?
 
   @@map("VerificationTokens")
-}
-
-model Project {
-  id            String        @id @default(uuid())
-  name          String
-  description   String?
-  platform      Platform      @default(all)
-  accessTTL     Int           @default(900)
-  refreshTTL    Int           @default(43200)
-  singleSession Boolean       @default(false)
-  users         ProjectUser[]
-  userId        String?
-  user          User?         @relation(fields: [userId], references: [id])
-
-  @@map("projects")
 }
 
 model MagicLink {
@@ -101,7 +114,7 @@ model Session {
 model UserSession {
   id                String      @id @default(uuid())
   createdAt         DateTime    @default(now())
-  revokedAt         DateTime
+  revokedAt         DateTime?
   accessExpiration  DateTime
   refreshExpiration DateTime
   userId            String

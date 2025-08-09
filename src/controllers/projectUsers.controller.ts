@@ -33,7 +33,7 @@ export const getProjectUsers = async (c: Context) => {
   });
 };
 
-// POST /api/projectUsers - create projectUser (THIS IS ONLY TO CREATE TEST USERS)
+// POST /api/projectUsers - create projectUser (THIS IS ONLY TO CREATE TEST USERS/MANAGE END USERS)
 export const createProjectUser = async (c: Context) => {
   const body = await c.req.json();
 

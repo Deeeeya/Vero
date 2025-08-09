@@ -17,7 +17,6 @@ import {
   updateProfileSchema,
   forgotPasswordSchema,
   requestResetSchema,
-  sendVerificationSchema,
 } from "../schemas/auth.schema";
 import { auth } from "../middlewares/auth.middleware";
 

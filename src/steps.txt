@@ -1,25 +1,43 @@
-// Step 1
-// set up server and get it to run -- Complete
-// configure both cors and helmet -- Complete
-// create a health endpoint (look it up) -- Complete
-// initialize redis (create one file that connects to it & export that variable so you can use it everywhere else) -- Complete
-// do the same step above for prisma (look at the docs to do it) -- Complete
-// make the middleware to check the api key -- Complete
+STEP 1
 
-// Step 2
-// creating project routes -- Complete
-// create a controller to create/update/delete/read -- In Progress
-// prisma
+- set up server and get it to run --> Complete
+- configure both cors and helmet --> Complete
+- create a health endpoint (look it up) --> Complete
+- initialize redis (create one file that connects to it & export that variable so you can use it everywhere else) --> Complete
+- do the same step above for prisma (look at the docs to do it) --> Complete
+- make the middleware to check the api key --> Complete
 
-// Test all project endpoints (add zod validation to all of them)
-// create another controller called projectAuth, reuse stuff from auth
+STEP 2
 
-// create a projectUser with email and password (Complete)
-// list all users (Complete)
-// when you get all users, do NOT select password (Complete)
-// updating a user (Complete)
-// delete a user (Complete)
-// create a route specifically for disabling/enabling a user "projectUsers/toggle"
-    - If they are disabled they cant sign in
-// create zod schemas for creating records/updating etc
-// set up auth middleware like in projects
+- creating project routes --> Complete
+- create a controller to create/update/delete/read --> Complete
+- prisma --> Complete
+
+STEP 3
+
+- Test all project endpoints (add zod validation to all of them) --> Complete
+
+STEP 4
+
+- create a projectUser with email and password --> Complete
+- list all users --> Complete
+- when you get all users, do NOT select password --> Complete
+- updating a user --> Complete
+- delete a user --> Complete
+- create a route specifically for disabling/enabling a user "projectUsers/toggle" --> Complete
+    * If they are disabled they cant sign in --> Complete
+- create zod schemas for creating records/updating etc --> Complete
+- set up auth middleware like in projects --> Complete
+
+STEP 5
+
+- create another controller called projectAuth, reuse stuff from auth --> In Progress
+- set up functions for projectAuth controller --> In Progress
+    * sign-up func --> Complete
+    * sign-in func --> Complete
+    * sign-out func --> Complete
+    * implement password reset (including forgot password) --> In Progress
+    * OPTIONAL: implement email verification (ONLY WHEN STEP 5 IS COMPLETE)
+- implement routes for projectAuth --> In Progress
+- add projectAuth schemas for zod validation --> In Progress
+- create projectAuth middleware to handle validation logic for the users session tokens
