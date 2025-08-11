@@ -147,3 +147,47 @@ export const signOut = async (c: Context) => {
     message: "Signed out successfully!",
   });
 };
+
+export const refreshToken = async (c: Context) => {
+  // check if body.refreshToken exists --> Complete
+  // find the session in database --> Complete
+  // validate session exists --> Complete
+  // generate new access token (including accessExpiration: 15 min) --> Complete
+  // update session in database
+  // return new token
+  const body = await c.req.json();
+
+  if (!body.refreshToken) {
+    throw new HTTPException(401, { message: "Unauthorized" });
+  }
+
+  const session = await db.userSession.findFirst({
+    where: {
+      refreshToken: body.refreshToken,
+      refreshExpiration: { gt: new Date() },
+    },
+  });
+
+  if (!session) {
+    throw new HTTPException(401, { message: "Invalid request" });
+  }
+
+  const newAccessToken = crypto.randomUUID();
+  const newAccessExpiration = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+  const newSession = await db.userSession.update({
+    where: { id: session.id },
+    data: {
+      accessToken: newAccessToken,
+      accessExpiration: newAccessExpiration,
+    },
+    select: {
+      accessToken: true,
+      accessExpiration: true,
+    },
+  });
+
+  return c.json({
+    accessToken: newSession.accessToken,
+  });
+};
