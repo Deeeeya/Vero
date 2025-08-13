@@ -1,12 +1,3 @@
-// Get the Authorization Header --> Complete
-// Extract the Token --> Complete
-// Look Up the Session --> Complete
-// Check if Token Expired --> Complete
-// Check if Session was Revoked --> Complete
-// Check if User is Disabled --> Complete
-// Save User Info (Set ID to a string) --> Complete
-// Continue to Route Handler --> Complete
-
 import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
 import { db } from "../lib/db/client";

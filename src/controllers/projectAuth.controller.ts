@@ -2,15 +2,10 @@ import { Context } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { db } from "../lib/db/client";
 import bcrypt from "bcrypt";
+import { sendEmail } from "../lib/resend/client";
 
 // POST /api/projectAuth - create new account
 export const signUp = async (c: Context) => {
-  // define body
-  // check to see if valid email and password
-  // check if user exists
-  // hash the password
-  // create the new user
-  // return the new user
   const body = await c.req.json();
 
   if (!body.email || !body.password) {
@@ -30,7 +25,7 @@ export const signUp = async (c: Context) => {
   const salt = 12;
   const hashPassword = await bcrypt.hash(body.password, salt);
 
-  const newUser = await db.projectAuth.create({
+  const newUser = await db.projectUser.create({
     data: {
       email: body.email,
       hashPassword: hashPassword,
@@ -53,11 +48,6 @@ export const signUp = async (c: Context) => {
 };
 // POST /api/projectAuth - sign in to account
 export const signIn = async (c: Context) => {
-  // check user input validation
-  // check to see if email/password is correct
-  // create access token
-  // create a session as soon as user signs in
-  // return message and session
   const body = await c.req.json();
 
   if (!body.email || !body.password) {
@@ -114,11 +104,6 @@ export const signIn = async (c: Context) => {
 };
 // DELETE /api/projectAuth - sign out of account
 export const signOut = async (c: Context) => {
-  // define authorization header
-  // get session id from authorization header (split authorization and get the token)
-  // define the session and check to see if the session exists
-  // delete the session
-  // return json
   const authorization = c.req.header("Authorization");
 
   if (!authorization) {
@@ -149,12 +134,6 @@ export const signOut = async (c: Context) => {
 };
 
 export const refreshToken = async (c: Context) => {
-  // check if body.refreshToken exists --> Complete
-  // find the session in database --> Complete
-  // validate session exists --> Complete
-  // generate new access token (including accessExpiration: 15 min) --> Complete
-  // update session in database
-  // return new token
   const body = await c.req.json();
 
   if (!body.refreshToken) {
@@ -189,5 +168,204 @@ export const refreshToken = async (c: Context) => {
 
   return c.json({
     accessToken: newSession.accessToken,
+  });
+};
+
+export const resetPassword = async (c: Context) => {
+  const userId = c.get("userId");
+
+  const body = await c.req.json();
+
+  if (!body.oldPassword || !body.newPassword) {
+    throw new HTTPException(401, {
+      message: "Please enter your old and new password",
+    });
+  }
+
+  const user = await db.projectUser.findUnique({
+    where: { id: userId },
+  });
+
+  if (!user) {
+    throw new HTTPException(400, { message: "Invalid access" });
+  }
+
+  const isPasswordCorrect = await bcrypt.compare(
+    body.oldPassword,
+    user.hashPassword
+  );
+
+  if (!isPasswordCorrect) {
+    throw new HTTPException(401, { message: "Incorrect password" });
+  }
+
+  if (body.newPassword != body.confirmNewPassword) {
+    throw new HTTPException(401, { message: "Passwords do not match" });
+  }
+
+  const salt = 12;
+  const newPassword = await bcrypt.hash(body.newPassword, salt);
+
+  const updatedUser = await db.projectUser.update({
+    where: { id: userId },
+    data: {
+      hashPassword: newPassword,
+    },
+    select: {
+      id: true,
+      email: true,
+      metadata: true,
+    },
+  });
+
+  if (!updatedUser) {
+    throw new HTTPException(400, { message: "Bad Request" });
+  }
+
+  const revokedUser = await db.userSession.updateMany({
+    where: { userId: userId },
+    data: {
+      revokedAt: new Date(Date.now()),
+    },
+  });
+
+  return c.json({
+    message: "Password reset successfully!",
+  });
+};
+
+export const forgotPassword = async (c: Context) => {
+  const body = await c.req.json();
+
+  if (!body.email) {
+    throw new HTTPException(400, { message: "Email is required" });
+  }
+
+  const user = await db.projectUser.findUnique({
+    where: { email: body.email },
+    select: {
+      id: true,
+      email: true,
+    },
+  });
+
+  if (!user) {
+    return c.json({
+      message: "Email sent!",
+    });
+  }
+
+  const resetToken = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+  if (!process.env.FRONTEND_URL) {
+    throw new HTTPException(500, { message: "Server error" });
+  }
+
+  const tokenRecord = await db.verificationTokens.create({
+    data: {
+      userId: user.id,
+      email: body.email,
+      token: resetToken,
+      expiresAt: expiresAt,
+      type: "password_reset",
+    },
+  });
+
+  const sentEmail = await sendEmail.emails.send({
+    from: "onboarding@resend.dev",
+    to: body.email,
+    subject: "Reset Your Password",
+    html: `
+        <div>
+          <h2>Password Reset Request</h2>
+          <p>Hello,</p>
+          <p>You requested to reset your password. Click the link below to create a new password:</p>
+          <a href="${process.env.FRONTEND_URL}/reset-password?token=${resetToken}" 
+             style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">
+            Reset Password
+          </a>
+          <p>This link will expire in 15 minutes.</p>
+          <p>If you didn't request this reset, please ignore this email.</p>
+          <p>Best regards,<br>The Vero Team</p>
+        </div>
+      `,
+  });
+
+  if (sentEmail.error) {
+    throw new HTTPException(500, { message: "Failed to send email" });
+  }
+
+  return c.json({
+    message: "Email sent!",
+  });
+};
+
+export const resetForgottenPassword = async (c: Context) => {
+  // get token and new password from request
+  // find the reset token in verificationTokens
+  /* 
+    check token exists
+    check if it is not expired
+    check not already used
+    check type is "password_reset"
+  */
+  // find the user associated with the token
+  // hash the new password
+  // update user's password in database
+  // mark the token as used
+  // OPTIONAL: revoke all user sessions (force re-login)
+  // return success message
+  const body = await c.req.json();
+
+  const resetToken = await db.verificationTokens.findFirst({
+    where: {
+      token: body.token,
+      expiresAt: { gt: new Date() },
+      used: false,
+      type: "password_reset",
+    },
+  });
+
+  if (!resetToken) {
+    throw new HTTPException(400, { message: "Invalid token" });
+  }
+
+  const user = await db.projectUser.findUnique({
+    where: { email: resetToken.email },
+  });
+
+  if (!user) {
+    throw new HTTPException(400, { message: "User not found" });
+  }
+
+  if (body.newPassword != body.confirmNewPassword) {
+    throw new HTTPException(401, { message: "Passwords don't match" });
+  }
+
+  const salt = 12;
+  const hashNewPassword = await bcrypt.hash(body.newPassword, salt);
+
+  const updatedUser = await db.projectUser.update({
+    where: { email: resetToken.email },
+    data: {
+      hashPassword: hashNewPassword,
+    },
+    select: {
+      id: true,
+      email: true,
+      metadata: true,
+    },
+  });
+
+  if (!updatedUser) {
+    throw new HTTPException(400, { message: "Failed to update password" });
+  }
+
+  const updatedResetToken = await db.verificationTokens.update({
+    where: { token: body.token },
+    data: {
+      used: true,
+    },
   });
 };

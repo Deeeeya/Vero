@@ -17,8 +17,10 @@ export const updateProfileSchema = z
   .partial();
 
 export const resetPasswordSchema = z.object({
-  oldPassword: z.string(),
-  newPassword: z.string(),
+  oldPassword: z.string().min(1, "Old password is required"),
+  newPassword: z
+    .string()
+    .min(8, "Password has to be at least 8 characters long"),
   confirmNewPassword: z.string(),
 });
 

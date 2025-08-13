@@ -40,4 +40,4 @@ STEP 5
     * OPTIONAL: implement email verification (ONLY WHEN STEP 5 IS COMPLETE)
 - implement routes for projectAuth --> In Progress
 - add projectAuth schemas for zod validation --> In Progress
-- create projectAuth middleware to handle validation logic for the users session tokens
+- create projectAuth middleware to handle validation logic for the users session tokens --> Complete

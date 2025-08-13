@@ -53,17 +53,6 @@ model ProjectUser {
   @@map("projectUsers")
 }
 
-model ProjectAuth {
-  id                 String               @id @default(uuid())
-  email              String               @unique
-  hashPassword       String
-  metadata           Json
-  verificationTokens VerificationTokens[]
-
-  @@index(fields: [email])
-  @@map("projectAuth")
-}
-
 enum TokenType {
   email_verification
   password_reset
@@ -78,10 +67,7 @@ model VerificationTokens {
   createdAt DateTime  @default(now())
   used      Boolean   @default(false)
   type      TokenType
-
-  user          User         @relation(fields: [userId], references: [id])
-  ProjectAuth   ProjectAuth? @relation(fields: [projectAuthId], references: [id])
-  projectAuthId String?
+  user      User      @relation(fields: [userId], references: [id])
 
   @@map("VerificationTokens")
 }
