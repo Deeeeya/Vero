@@ -5,6 +5,7 @@ import {
   getProjectUser,
   updateProjectUser,
   deleteProjectUser,
+  toggleProjectUser,
 } from "../controllers/projectUsers.controller";
 import { auth } from "../middlewares/auth.middleware";
 import { zValidator } from "@hono/zod-validator";
@@ -33,9 +34,10 @@ projectUserRoutes.put(
 projectUserRoutes.delete("/:id", auth, deleteProjectUser);
 
 projectUserRoutes.put(
-  "/:id",
+  "/:id/toggle",
   auth,
-  zValidator("json", toggleProjectUserSchema)
+  zValidator("json", toggleProjectUserSchema),
+  toggleProjectUser
 );
 
 export { projectUserRoutes };

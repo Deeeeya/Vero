@@ -38,16 +38,17 @@ model Project {
 }
 
 model ProjectUser {
-  id            String             @id @default(uuid())
-  email         String             @unique
-  hashPassword  String
-  metadata      Json
-  enabled       Boolean            @default(true)
-  sessions      UserSession[]
-  verifications VerificationCode[]
-  project       Project?           @relation(fields: [projectId], references: [id])
-  projectId     String?
-  magicLinks    MagicLink[]
+  id                 String               @id @default(uuid())
+  email              String               @unique
+  hashPassword       String
+  metadata           Json
+  enabled            Boolean              @default(true)
+  sessions           UserSession[]
+  verifications      VerificationCode[]
+  project            Project?             @relation(fields: [projectId], references: [id])
+  projectId          String?
+  magicLinks         MagicLink[]
+  VerificationTokens VerificationTokens[]
 
   @@index(fields: [email])
   @@map("projectUsers")
@@ -59,15 +60,17 @@ enum TokenType {
 }
 
 model VerificationTokens {
-  id        String    @id @default(uuid())
-  userId    String
-  email     String
-  token     String    @unique
-  expiresAt DateTime
-  createdAt DateTime  @default(now())
-  used      Boolean   @default(false)
-  type      TokenType
-  user      User      @relation(fields: [userId], references: [id])
+  id            String       @id @default(uuid())
+  userId        String?
+  email         String
+  token         String       @unique
+  expiresAt     DateTime
+  createdAt     DateTime     @default(now())
+  used          Boolean      @default(false)
+  type          TokenType
+  user          User?        @relation(fields: [userId], references: [id])
+  projectUser   ProjectUser? @relation(fields: [projectUserId], references: [id])
+  projectUserId String?
 
   @@map("VerificationTokens")
 }

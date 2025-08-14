@@ -11,6 +11,7 @@ import {
 } from "../controllers/projectAuth.controller";
 import {
   forgotPasswordSchema,
+  resetForgottenPasswordSchema,
   resetPasswordSchema,
   signInSchema,
   signUpSchema,
@@ -34,6 +35,10 @@ projectAuthRoutes.post(
   zValidator("json", forgotPasswordSchema),
   forgotPassword
 );
-projectAuthRoutes.post("/reset-forgotten-password", resetForgottenPassword);
+projectAuthRoutes.post(
+  "/reset-forgotten-password",
+  zValidator("json", resetForgottenPasswordSchema),
+  resetForgottenPassword
+);
 
 export { projectAuthRoutes };

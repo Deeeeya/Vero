@@ -11,6 +11,8 @@ import { authRoutes } from "./routes/auth.routes";
 import { projectRoutes } from "./routes/projects.routes";
 import { app } from "./lib/hono/app";
 import { auth } from "./middlewares/auth.middleware";
+import { projectAuthRoutes } from "./routes/projectAuth.routes";
+import { projectUserRoutes } from "./routes/projectUsers.routes";
 
 app.use(secureHeaders());
 app.use(cors());
@@ -65,6 +67,9 @@ app.get("/health", async (c) => {
 app.route("/api/auth", authRoutes);
 app.use("/api/projects/*", auth);
 app.route("/api/projects", projectRoutes);
+app.use("api/projectUsers/*", auth);
+app.route("/api/projectUsers", projectUserRoutes);
+app.route("/api/projectAuth", projectAuthRoutes);
 
 const port = 3000;
 

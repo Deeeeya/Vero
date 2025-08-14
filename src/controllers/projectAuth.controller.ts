@@ -55,11 +55,15 @@ export const signIn = async (c: Context) => {
   }
 
   const user = await db.projectUser.findFirst({
-    where: { email: body.email },
+    where: { email: body.email, projectId: body.projectId },
   });
 
   if (!user) {
     throw new HTTPException(401, { message: "Invalid email or password" });
+  }
+
+  if (!user.enabled) {
+    throw new HTTPException(403, { message: "Account is disabled" });
   }
 
   const isPasswordCorrect = await bcrypt.compare(
@@ -96,9 +100,15 @@ export const signIn = async (c: Context) => {
   return c.json({
     message: "Signed in successfully!",
     accessToken: userSession.accessToken,
+    refreshToken: userSession.refreshToken,
     user: {
       id: user.id,
       email: user.email,
+    },
+    session: {
+      id: userSession.id,
+      createdAt: userSession.createdAt,
+      accessExpiration: userSession.accessExpiration,
     },
   });
 };
@@ -236,6 +246,7 @@ export const resetPassword = async (c: Context) => {
 
 export const forgotPassword = async (c: Context) => {
   const body = await c.req.json();
+  console.log(body);
 
   if (!body.email) {
     throw new HTTPException(400, { message: "Email is required" });
@@ -264,11 +275,12 @@ export const forgotPassword = async (c: Context) => {
 
   const tokenRecord = await db.verificationTokens.create({
     data: {
-      userId: user.id,
+      projectUserId: user.id,
       email: body.email,
       token: resetToken,
       expiresAt: expiresAt,
       type: "password_reset",
+      used: false,
     },
   });
 
@@ -339,6 +351,10 @@ export const resetForgottenPassword = async (c: Context) => {
     throw new HTTPException(400, { message: "User not found" });
   }
 
+  if (!body.newPassword) {
+    throw new HTTPException(400, { message: "New password is required" });
+  }
+
   if (body.newPassword != body.confirmNewPassword) {
     throw new HTTPException(401, { message: "Passwords don't match" });
   }
@@ -347,7 +363,7 @@ export const resetForgottenPassword = async (c: Context) => {
   const hashNewPassword = await bcrypt.hash(body.newPassword, salt);
 
   const updatedUser = await db.projectUser.update({
-    where: { email: resetToken.email },
+    where: { id: user.id },
     data: {
       hashPassword: hashNewPassword,
     },
@@ -358,14 +374,16 @@ export const resetForgottenPassword = async (c: Context) => {
     },
   });
 
-  if (!updatedUser) {
-    throw new HTTPException(400, { message: "Failed to update password" });
-  }
-
-  const updatedResetToken = await db.verificationTokens.update({
-    where: { token: body.token },
+  const usedToken = await db.verificationTokens.update({
+    where: { id: resetToken.id },
     data: {
       used: true,
+      type: "password_reset",
     },
+  });
+
+  return c.json({
+    message:
+      "Password has been reset successfully. Please log in with your new password.",
   });
 };

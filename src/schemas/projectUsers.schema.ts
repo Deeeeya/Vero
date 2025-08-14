@@ -22,7 +22,7 @@ export const updateProjectUserSchema = z.object({
     .min(8, "Password has to be at least 8 characters long")
     .optional(),
   metadata: z.record(z.any()).optional(),
-  projectId: z.string().min(1, "Project ID is required"),
+  projectId: z.string().min(1, "Project ID is required").optional(),
 });
 
 export const toggleProjectUserSchema = z.object({

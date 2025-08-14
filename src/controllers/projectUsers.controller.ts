@@ -242,6 +242,18 @@ export const deleteProjectUser = async (c: Context) => {
     throw new HTTPException(400, { message: "Project user not found" });
   }
 
+  await db.userSession.deleteMany({
+    where: { userId: projectUserId },
+  });
+
+  await db.verificationCode.deleteMany({
+    where: { projectUserId: projectUserId },
+  });
+
+  await db.magicLink.deleteMany({
+    where: { userId: projectUserId },
+  });
+
   await db.projectUser.delete({
     where: { id: projectUserId },
   });
