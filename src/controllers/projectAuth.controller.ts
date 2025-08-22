@@ -8,12 +8,18 @@ import { sendEmail } from "../lib/resend/client";
 export const signUp = async (c: Context) => {
   const body = await c.req.json();
 
+  const projectId = c.get("projectId");
+
+  if (!projectId) {
+    throw new HTTPException(401, { message: "Missing project ID" });
+  }
+
   if (!body.email || !body.password) {
     throw new HTTPException(400, { message: "Email or password required" });
   }
 
   const existingUser = await db.projectUser.findUnique({
-    where: { email: body.email },
+    where: { email: body.email, projectId: projectId },
   });
 
   if (existingUser) {
@@ -27,6 +33,7 @@ export const signUp = async (c: Context) => {
 
   const newUser = await db.projectUser.create({
     data: {
+      projectId: projectId,
       email: body.email,
       hashPassword: hashPassword,
       metadata: body.metadata || {},
@@ -49,13 +56,18 @@ export const signUp = async (c: Context) => {
 // POST /api/projectAuth - sign in to account
 export const signIn = async (c: Context) => {
   const body = await c.req.json();
+  const projectId = c.get("projectId");
+
+  if (!projectId) {
+    throw new HTTPException(401, { message: "Missing project ID" });
+  }
 
   if (!body.email || !body.password) {
     throw new HTTPException(400, { message: "Email or password required" });
   }
 
   const user = await db.projectUser.findFirst({
-    where: { email: body.email, projectId: body.projectId },
+    where: { email: body.email, projectId: projectId },
   });
 
   if (!user) {
@@ -183,6 +195,11 @@ export const refreshToken = async (c: Context) => {
 
 export const resetPassword = async (c: Context) => {
   const userId = c.get("userId");
+  const projectId = c.get("projectId");
+
+  if (!projectId) {
+    throw new HTTPException(401, { message: "Missing project ID" });
+  }
 
   const body = await c.req.json();
 
@@ -193,7 +210,7 @@ export const resetPassword = async (c: Context) => {
   }
 
   const user = await db.projectUser.findUnique({
-    where: { id: userId },
+    where: { id: userId, projectId: projectId },
   });
 
   if (!user) {
@@ -217,7 +234,7 @@ export const resetPassword = async (c: Context) => {
   const newPassword = await bcrypt.hash(body.newPassword, salt);
 
   const updatedUser = await db.projectUser.update({
-    where: { id: userId },
+    where: { id: userId, projectId: projectId },
     data: {
       hashPassword: newPassword,
     },
@@ -246,14 +263,18 @@ export const resetPassword = async (c: Context) => {
 
 export const forgotPassword = async (c: Context) => {
   const body = await c.req.json();
-  console.log(body);
+  const projectId = c.get("projectId");
+
+  if (!projectId) {
+    throw new HTTPException(401, { message: "Missing project ID" });
+  }
 
   if (!body.email) {
     throw new HTTPException(400, { message: "Email is required" });
   }
 
   const user = await db.projectUser.findUnique({
-    where: { email: body.email },
+    where: { email: body.email, projectId: projectId },
     select: {
       id: true,
       email: true,
@@ -329,6 +350,11 @@ export const resetForgottenPassword = async (c: Context) => {
   // OPTIONAL: revoke all user sessions (force re-login)
   // return success message
   const body = await c.req.json();
+  const projectId = c.get("projectId");
+
+  if (!projectId) {
+    throw new HTTPException(401, { message: "Missing project ID" });
+  }
 
   const resetToken = await db.verificationTokens.findFirst({
     where: {
@@ -344,7 +370,7 @@ export const resetForgottenPassword = async (c: Context) => {
   }
 
   const user = await db.projectUser.findUnique({
-    where: { email: resetToken.email },
+    where: { email: resetToken.email, projectId: projectId },
   });
 
   if (!user) {
@@ -363,7 +389,7 @@ export const resetForgottenPassword = async (c: Context) => {
   const hashNewPassword = await bcrypt.hash(body.newPassword, salt);
 
   const updatedUser = await db.projectUser.update({
-    where: { id: user.id },
+    where: { id: user.id, projectId: projectId },
     data: {
       hashPassword: hashNewPassword,
     },

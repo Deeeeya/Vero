@@ -1,5 +1,6 @@
 import { createMiddleware } from "hono/factory";
 import { HTTPException } from "hono/http-exception";
+import { db } from "../lib/db/client";
 
 const apiAuthenticator = createMiddleware(async (c, next) => {
   // check the "x-api-key" and "Authorization" for an api key
@@ -23,6 +24,22 @@ const apiAuthenticator = createMiddleware(async (c, next) => {
   if (apiKey !== validApiKey) {
     throw new HTTPException(401, { message: "Unauthorized" });
   }
+
+  const projectId = c.req.header("x-project-id");
+
+  if (!projectId) {
+    throw new HTTPException(401, { message: "Missing Project ID" });
+  }
+
+  const project = await db.project.findUnique({
+    where: { id: projectId },
+  });
+
+  if (!project) {
+    throw new HTTPException(401, { message: "Invalid Project ID" });
+  }
+
+  c.set("projectId", String(projectId));
 
   if (apiKey === validApiKey) {
     return await next();
