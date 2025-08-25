@@ -1,33 +1,7 @@
 import api from "./api";
+import type { LoginResponse, RegisterResponse } from "../types/auth";
 
-// Typescript interfaces (they describe what the data looks like)
-// Create LoginRequest, RegisterRequest, User, Session, LoginResponse, RegisterResponse
-
-interface User {
-  id: string;
-  email: string;
-  metadata: object;
-}
-
-interface Session {
-  id: string;
-  userId: string;
-  createdAt: string;
-  expiresAt: string;
-  metadata: object;
-}
-
-interface LoginResponse {
-  message: string;
-  user: User;
-  session: Session;
-}
-
-interface RegisterResponse {
-  user: User;
-}
-
-/* Next step is to add Auth service functions,
+/* Add Auth service functions,
  so we wrap it around a authService object with 
  the functions inside it */
 
