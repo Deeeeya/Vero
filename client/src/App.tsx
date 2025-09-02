@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
 import "./App.css";
 
 import Login from "./pages/auth/Login";
@@ -12,25 +13,30 @@ import UserSignin from "./pages/user-auth/UserSignin";
 
 function App() {
   return (
-    <BrowserRouter>
-      <div className="App">
-        <Routes>
-          {/* Admin Authentication Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          {/* Admin Dashboard Routes */}
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/dashboard/projects" element={<Projects />} />
-          <Route path="/dashboard/projects/:id" element={<ProjectDetails />} />
-          <Route path="/dashboard/projects/:id/users" element={<Users />} />
-          {/* End-User Authentication Rooutes */}
-          <Route path="/auth/signup" element={<UserSignup />} />
-          <Route path="/auth/signin" element={<UserSignin />} />
-          {/* Default Route */}
-          <Route path="/" element={<Dashboard />} />
-        </Routes>
-      </div>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <div className="App">
+          <Routes>
+            {/* Admin Authentication Routes */}
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            {/* Admin Dashboard Routes */}
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/dashboard/projects" element={<Projects />} />
+            <Route
+              path="/dashboard/projects/:id"
+              element={<ProjectDetails />}
+            />
+            <Route path="/dashboard/projects/:id/users" element={<Users />} />
+            {/* End-User Authentication Rooutes */}
+            <Route path="/auth/signup" element={<UserSignup />} />
+            <Route path="/auth/signin" element={<UserSignin />} />
+            {/* Default Route */}
+            <Route path="/" element={<Dashboard />} />
+          </Routes>
+        </div>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 
