@@ -25,4 +25,4 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
 export default ProtectedRoute;
 
-// ONLY WRAP THE ADMIN-ONLY PAGES (DASHBOARD)
+// ONLY WRAP THE ELEMENTS OF ADMIN-ONLY PAGES (DASHBOARD)

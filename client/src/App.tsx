@@ -22,20 +22,50 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             {/* Admin Dashboard Routes */}
-            <ProtectedRoute>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/dashboard/projects" element={<Projects />} />
-              <Route
-                path="/dashboard/projects/:id"
-                element={<ProjectDetails />}
-              />
-              <Route path="/dashboard/projects/:id/users" element={<Users />} />
-            </ProtectedRoute>
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/projects"
+              element={
+                <ProtectedRoute>
+                  <Projects />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/projects/:id"
+              element={
+                <ProtectedRoute>
+                  <ProjectDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/projects/:id/users"
+              element={
+                <ProtectedRoute>
+                  <Users />
+                </ProtectedRoute>
+              }
+            />
             {/* End-User Authentication Rooutes */}
             <Route path="/auth/signup" element={<UserSignup />} />
             <Route path="/auth/signin" element={<UserSignin />} />
             {/* Default Route */}
-            <Route path="/" element={<Dashboard />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Dashboard />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
         </div>
       </BrowserRouter>
