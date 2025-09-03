@@ -3,7 +3,7 @@ import { useAuth } from "../hooks/useAuth";
 import { Navigate } from "react-router-dom";
 
 interface ProtectedRouteProps {
-  // Expects childre prop
+  // Expects children prop
   children: ReactNode; // This tells TypeScript what props this component expects and protected page will be wrapped
 }
 
@@ -24,3 +24,5 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 };
 
 export default ProtectedRoute;
+
+// ONLY WRAP THE ADMIN-ONLY PAGES (DASHBOARD)
