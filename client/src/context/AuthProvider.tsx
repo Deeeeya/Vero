@@ -16,7 +16,7 @@ import type { User } from "../types/auth";
 // [] means "only run this once when component first loads"
 // Login function
 // Logout function
-// Create value object with neccessary functions
+// Create value object with necessary functions
 // return the AuthContext element with value
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {

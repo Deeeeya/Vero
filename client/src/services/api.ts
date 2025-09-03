@@ -27,8 +27,12 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
+    // Always clear invalid/expired tokens
     if (error.response?.status === 401) {
       localStorage.removeItem("sessionToken");
+    }
+    // Only redirect if not already on login page
+    if (window.location.pathname !== "/login") {
       window.location.href = "/login";
     }
     return Promise.reject(error);
