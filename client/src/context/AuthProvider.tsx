@@ -25,9 +25,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const checkAuth = () => {
-      if (authService.isAuthenticated()) {
-        setUser({ id: "", email: "", metadata: {} });
-      }
       setIsLoading(false);
     };
     checkAuth();

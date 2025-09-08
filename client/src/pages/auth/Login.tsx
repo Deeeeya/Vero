@@ -87,7 +87,7 @@ const Login = () => {
           type="submit"
           disabled={isLoading}
           style={{
-            width: "106%",
+            width: "100%",
             padding: "10px",
             backgroundColor: isLoading ? "#ccc" : "#007bff",
             color: "white",
