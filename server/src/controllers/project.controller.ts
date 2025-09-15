@@ -7,14 +7,12 @@ import { filterUndefined } from "../lib/utils";
 export const getProjects = async (c: Context) => {
   const userId = c.get("userId");
   const projects = await db.project.findMany({
-    select: {
-      id: true,
-      name: true,
-      description: true,
-      platform: true,
-      accessTTL: true,
-      refreshTTL: true,
-      singleSession: true,
+    include: {
+      _count: {
+        select: {
+          users: true,
+        },
+      },
     },
     where: { userId: userId },
   });
