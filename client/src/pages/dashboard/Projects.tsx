@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import api from "../../services/api";
 import type { Project } from "../../types/projects";
 import { Button } from "@/components/ui/button";
+type MyState = string | null;
 
 const Projects = () => {
   const { user, logout } = useAuth();
@@ -12,6 +13,7 @@ const Projects = () => {
   const [error, setError] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [deletingProjectId, setDeletingProjectId] = useState<MyState>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -75,6 +77,26 @@ const Projects = () => {
     fetchProjects();
   }, []);
 
+  const handleDeleteProject = async (projectId: string) => {
+    try {
+      setDeletingProjectId(projectId);
+      const userChoice = window.confirm(
+        "Are you sure you want to delete this project?"
+      );
+      if (userChoice) {
+        await api.delete("/api/projects/" + projectId);
+        fetchProjects();
+      } else {
+        setDeletingProjectId(null);
+        return;
+      }
+    } catch {
+      setError("Failed to delete project.");
+    } finally {
+      setDeletingProjectId(null);
+    }
+  };
+
   console.log(projects);
 
   return (
@@ -84,7 +106,7 @@ const Projects = () => {
         <div className="flex items-center space-x-4">
           <span className="text-gray-900">Welcome, {user?.email}</span>
           <button
-            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition-colors"
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded transition-colors cursor-pointer"
             onClick={logout}
           >
             Logout
@@ -192,8 +214,15 @@ const Projects = () => {
                           <button className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors cursor-pointer">
                             Edit
                           </button>
-                          <button className="text-sm text-red-600 hover:text-red-800 font-medium transition-colors cursor-pointer">
-                            Delete
+                          <button
+                            onClick={() => {
+                              handleDeleteProject(project.id);
+                            }}
+                            className="text-sm text-red-600 hover:text-red-800 font-medium transition-colors cursor-pointer"
+                          >
+                            {deletingProjectId === project.id
+                              ? "Deleting..."
+                              : "Delete"}
                           </button>
                         </div>
                       </td>
