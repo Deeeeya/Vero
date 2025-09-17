@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import api from "../../services/api";
 import type { Project } from "../../types/projects";
 import { Button } from "@/components/ui/button";
-type MyState = string | null;
+type MyDeleteState = string | null;
 
 const Projects = () => {
   const { user, logout } = useAuth();
@@ -13,7 +13,9 @@ const Projects = () => {
   const [error, setError] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
-  const [deletingProjectId, setDeletingProjectId] = useState<MyState>(null);
+  const [deletingProjectId, setDeletingProjectId] =
+    useState<MyDeleteState>(null);
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -40,23 +42,49 @@ const Projects = () => {
 
   const handleCloseModal = () => {
     setShowCreateModal(false);
+    setEditingProject(null);
+    setFormData({
+      name: "",
+      description: "",
+      platform: "all",
+      accessTTL: 900,
+      refreshTTL: 43200,
+      singleSession: false,
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       setIsCreating(true);
-      await api.post("/api/projects", formData);
-      fetchProjects();
-      setShowCreateModal(false);
-      setFormData({
-        name: "",
-        description: "",
-        platform: "all",
-        accessTTL: 900,
-        refreshTTL: 43200,
-        singleSession: false,
-      });
+
+      if (editingProject) {
+        await api.put("/api/projects/" + editingProject.id, formData);
+        fetchProjects();
+        setShowCreateModal(false);
+        setFormData({
+          name: "",
+          description: "",
+          platform: "all",
+          accessTTL: 900,
+          refreshTTL: 43200,
+          singleSession: false,
+        });
+        setEditingProject(null);
+      } else {
+        await api.post("/api/projects", formData);
+        fetchProjects();
+        setShowCreateModal(false);
+        setFormData({
+          name: "",
+          description: "",
+          platform: "all",
+          accessTTL: 900,
+          refreshTTL: 43200,
+          singleSession: false,
+        });
+        setEditingProject(null);
+      }
     } catch {
       setError("Failed to submit form");
     } finally {
@@ -95,6 +123,19 @@ const Projects = () => {
     } finally {
       setDeletingProjectId(null);
     }
+  };
+
+  const handleEditProject = (project: Project) => {
+    setEditingProject(project);
+    setFormData({
+      name: project.name,
+      description: project.description,
+      platform: project.platform,
+      accessTTL: project.accessTTL,
+      refreshTTL: project.refreshTTL,
+      singleSession: project.singleSession,
+    });
+    setShowCreateModal(true);
   };
 
   console.log(projects);
@@ -211,7 +252,12 @@ const Projects = () => {
                       </td>
                       <td className="px-3 py-4 text-base text-gray-900">
                         <div className="flex gap-2">
-                          <button className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors cursor-pointer">
+                          <button
+                            onClick={() => {
+                              handleEditProject(project);
+                            }}
+                            className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors cursor-pointer"
+                          >
                             Edit
                           </button>
                           <button
@@ -234,13 +280,13 @@ const Projects = () => {
           </div>
         </main>
       </div>
-      {showCreateModal && (
+      {(showCreateModal || editingProject) && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div className="absolute inset-0 bg-black opacity-50"></div>
           <div className="relative bg-white rounded-lg shadow-lg w-full max-w-md p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gray-900">
-                Create New Project
+                {editingProject ? "Edit Project" : "Create Project"}
               </h2>
               <button
                 onClick={handleCloseModal}
@@ -300,7 +346,13 @@ const Projects = () => {
                     Cancel
                   </Button>
                   <Button type="submit" disabled={isCreating}>
-                    {isCreating ? "Creating..." : "Create Project"}
+                    {editingProject
+                      ? isCreating
+                        ? "Updating..."
+                        : "Update Project"
+                      : isCreating
+                      ? "Creating..."
+                      : "Create Project"}
                   </Button>
                 </div>
               </div>

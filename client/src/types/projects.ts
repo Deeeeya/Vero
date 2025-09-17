@@ -1,9 +1,9 @@
 export type Project = {
-  accessTTL: number;
-  description: string;
   id: string;
   name: string;
+  description: string;
   platform: string;
+  accessTTL: number;
   refreshTTL: number;
   singleSession: boolean;
   userId: string;
