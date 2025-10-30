@@ -91,7 +91,55 @@ const ProjectDetails = () => {
                   <p className="text-gray-600 mt-1">{project?.description}</p>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-4"></div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <p className="text-sm font-medium text-gray-500 mb-1">
+                    Platform
+                  </p>
+                  <p className="text-base text-gray-900 capitalize">
+                    {project.platform}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <p className="text-sm font-medium text-gray-500 mb-1">
+                    Access Token TTL
+                  </p>
+                  <p className="text-base text-gray-900">
+                    {project.accessTTL} seconds
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <p className="text-sm font-medium text-gray-500 mb-1">
+                    Refresh Token TTL
+                  </p>
+                  <p className="text-base text-gray-900">
+                    {project.refreshTTL} seconds
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <p className="text-sm font-medium text-gray-500 mb-1">
+                    Single Session
+                  </p>
+                  <p className="text-base text-gray-900">
+                    {project.singleSession ? "Enabled" : "Disabled"}
+                  </p>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-md">
+                  <p className="text-sm font-medium text-gray-500 mb-1">
+                    Total Users
+                  </p>
+                  <p className="text-base text-gray-900">
+                    {project._count?.users || 0}
+                  </p>
+                </div>
+              </div>
+              <div className="border-top border-gray-200 mt-6 pt-6">
+                <div className="flex justify-end gap-3">
+                  <Button onClick={} variant="outline">
+                    Edit Project
+                  </Button>
+                </div>
+              </div>
             </div>
           )}
         </main>
