@@ -135,7 +135,7 @@ const ProjectDetails = () => {
               </div>
               <div className="border-top border-gray-200 mt-6 pt-6">
                 <div className="flex justify-end gap-3">
-                  <Button onClick={} variant="outline">
+                  <Button variant="outline">
                     Edit Project
                   </Button>
                 </div>

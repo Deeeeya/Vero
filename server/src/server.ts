@@ -4,7 +4,6 @@ import { cors } from "hono/cors";
 import { secureHeaders } from "hono/secure-headers";
 import { logger } from "hono/logger";
 import { apiAuthenticator } from "./middlewares/api.middleware";
-import { getRedisClient, initRedis } from "./lib/redis/client";
 import { db } from "./lib/db/client";
 import { HTTPException } from "hono/http-exception";
 import { authRoutes } from "./routes/auth.routes";
@@ -13,6 +12,7 @@ import { app } from "./lib/hono/app";
 import { auth } from "./middlewares/auth.middleware";
 import { projectAuthRoutes } from "./routes/projectAuth.routes";
 import { projectUserRoutes } from "./routes/projectUsers.routes";
+// import { getRedisClient, initRedis } from "./lib/redis/client"; (Redis not needed atm)
 
 app.use(secureHeaders());
 app.use(cors());
@@ -35,8 +35,8 @@ app.onError((err, c) => {
 
 app.get("/health", async (c) => {
   try {
-    const redis = await getRedisClient();
-    await redis.ping();
+    // const redis = await getRedisClient();
+    // await redis.ping();
 
     //test database
 
@@ -44,8 +44,8 @@ app.get("/health", async (c) => {
       status: "ok",
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
-      redis: "connected",
-      message: "Server and Redis are healthy!",
+      // redis: "connected",
+      message: "Server is healthy!",
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
@@ -55,9 +55,9 @@ app.get("/health", async (c) => {
         status: "error",
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
-        redis: "disconnected",
+        // redis: "disconnected",
         error: errorMessage,
-        message: "Redis connection failed",
+        message: "Connection failed",
       },
       503
     );
@@ -75,7 +75,7 @@ const port = 3000;
 
 async function startServer() {
   try {
-    await initRedis();
+    // await initRedis();
     serve({ fetch: app.fetch, port });
   } catch (error) {
     console.log("Failed to start server:", error);
